@@ -1,3 +1,3 @@
-Pallete Control
+Palette Control
 
 todo
