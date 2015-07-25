@@ -1,0 +1,15 @@
+<html>
+<head>
+<title>palette ctrl</title>
+</head>
+<body>
+  <textarea id="data">
+  </textarea>
+  <script type="text/javascript">
+  var ipc = require('ipc');
+  ipc.on('midi-message', function(midiData) {
+    document.getElementById("data").value += midiData.controlId;
+  });
+  </script>
+</body>
+</html>
