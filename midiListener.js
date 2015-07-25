@@ -1,19 +1,26 @@
 var applescript = require('applescript');
 var midi = require('midi');
 
-var script = 'tell application "iTunes" to set the sound volume to ';
-var raiseVolumeScript = 'tell application "System Events" to tell process "Console" to key code 111 using {command down}';
-var lowerVolumeScript = 'tell application "System Events" to tell process "Console" to key code 103 using {command down}';
-var input = new midi.input();
-var COUNTDOWN_MAX = .02;
-var deltaCountdown = COUNTDOWN_MAX;
 var INTERVAL = 128/32;
 var currentValue = 0;
 var needsFirst = true;
 var DataCallback = function() {};
 
+var GetAdjustVolumeAppleScript = function(isRaising, iterations) {
+  var keyCode = isRaising ? 111 : 103;
+  return `tell application "System Events" to tell process "Console"
+  	repeat ${iterations} times
+  		key code ${keyCode} using {command down}
+  	end repeat
+  end tell`;
+};
+
+var input = new midi.input();
 input.on('message', function(deltaTime, message){
-  DataCallback({ controlId: message[0], value: message[2] });
+  DataCallback({ controlId: message[0], value: message[2], other: message[1] });
+  if (message[1] != exports.volumeFilter)
+    return;
+
   var value = message[2];
   if (needsFirst) {
     currentValue = value;
@@ -24,18 +31,14 @@ input.on('message', function(deltaTime, message){
   var valueDiff = value - currentValue;
   if (Math.abs(valueDiff) >= INTERVAL) {
     currentValue = value;
-    var scriptString = raiseVolumeScript;
-    if (valueDiff < 0) {
-      scriptString = lowerVolumeScript;
-    }
-    var result = "";
     var max = (Math.abs(valueDiff) - Math.abs(valueDiff)%INTERVAL)/INTERVAL;
-    for (var i = 0; i < max; ++i ) {
-      result += "\n" + scriptString;
-    }
+    var isRaisingVolume = valueDiff > 0;
+    var result = GetAdjustVolumeAppleScript(isRaisingVolume, max);
     applescript.execString(result);
   }
 });
+
+exports.volumeFilter = 0;
 
 exports.addDebugCallback = function(callback) {
   DataCallback = callback;

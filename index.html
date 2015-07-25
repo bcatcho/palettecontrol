@@ -3,13 +3,19 @@
 <title>palette ctrl</title>
 </head>
 <body>
-  <textarea id="data">
+  <input type="text" id="controlIdFilter" onKeyUp="return controlIdFilterChanged()"/></br>
+  <textarea style="width:100%" id="data">
   </textarea>
   <script type="text/javascript">
   var ipc = require('ipc');
   ipc.on('midi-message', function(midiData) {
-    document.getElementById("data").value += midiData.controlId;
+    var textAreaValue = document.getElementById("data").value;
+    document.getElementById("data").value = midiData.controlId + ", " + midiData.other + ", " + midiData.value + "\n" + textAreaValue;
   });
+
+  function controlIdFilterChanged() {
+    ipc.send('midi-filter', document.getElementById("controlIdFilter").value);
+  }
   </script>
 </body>
 </html>

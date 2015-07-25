@@ -2,6 +2,7 @@ var menubar = require('menubar');
 var midiListener = require('./midiListener');
 var Tray = require('tray');
 var nativeImage = require('native-image');
+var ipc = require('ipc');
 var iconLocation = process.cwd() + "/images/icons/iconTemplate.png";
 
 // preload the window to make it load faster on first click
@@ -15,6 +16,11 @@ mb.on('ready', function ready () {
   console.log('app is ready');
   midiListener.addDebugCallback(midiCallback);
   midiListener.startListening();
+
+  ipc.on('midi-filter', function(event, arg) {
+    midiListener.volumeFilter = arg;
+  });
+
 });
 
 mb.on('show', function show () {
