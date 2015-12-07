@@ -15,12 +15,24 @@ var GetAdjustVolumeAppleScript = function(isRaising, iterations) {
   end tell`;
 };
 
+var GetSleepAppleScript = function () {
+  return `tell app "System Events" to sleep`;
+}
+
 var input = new midi.input();
 input.on('message', function(deltaTime, message){
   DataCallback({ controlId: message[0], value: message[2], other: message[1] });
-  if (message[1] != exports.volumeFilter)
-    return;
+  switch (message[1]) {
+    case exports.volumeFilter:
+      adjustVolume(deltaTime, message);
+      break;
+    case exports.sleepFilter:
+      goToSleep(deltaTime, message);
+      break;
+  }
+});
 
+var adjustVolume = function(deltaTime, message) {
   var value = message[2];
   if (needsFirst) {
     currentValue = value;
@@ -36,9 +48,17 @@ input.on('message', function(deltaTime, message){
     var result = GetAdjustVolumeAppleScript(isRaisingVolume, max);
     applescript.execString(result);
   }
-});
+}
+
+var goToSleep = function(deltaTime, message) {
+  if (message[0] != 128)
+    return;
+  applescript.execString(GetSleepAppleScript());
+}
 
 exports.volumeFilter = 0;
+exports.sleepFilter = 1;
+exports.sleepControlId = 128
 
 exports.addDebugCallback = function(callback) {
   DataCallback = callback;
